@@ -1,0 +1,63 @@
+# ---------- Quarto ----------
+.quarto/
+_site/
+_freeze/
+*.html
+!index.html
+
+# ---------- Office ----------
+~$*.docx
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+
+# ---------- Editors ----------
+.vscode/
+.idea/
+*.swp
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# virtual environment
+.venv/
+venv/
+env/
+
+# pytest
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# mypy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# coverage
+.coverage
+htmlcov/
+
+# build
+build/
+dist/
+*.egg-info/
+
+# environment variables
+.env
+.env.*
+
+# ---------- R ----------
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# ---------- Data ----------
+cleaned_data/merged_data.csv
