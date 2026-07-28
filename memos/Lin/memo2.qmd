@@ -1,0 +1,137 @@
+---
+title: ""
+format:
+  pdf:
+    toc: false
+    number-sections: false
+    geometry: margin=0.7in
+    include-in-header:
+      text: |
+        \usepackage{caption}
+        \captionsetup[figure]{font=small}
+execute:
+  echo: false
+jupyter: python3
+---
+
+```{python}
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+```
+
+```{python}
+# Load the data
+df = pd.read_csv("E:/2026summer/psych755/project/merged_data.csv")
+```
+
+```{=latex}
+\noindent
+{\fontsize{16}{20}\selectfont\bfseries DSHBeauties - Research Memo 2}
+
+\vspace{0.2em}
+
+{\small Lin Li | July 27, 2026}
+
+\vspace{0.8em}
+```
+
+
+## Research Or Analytical Question
+
+What is the distribution of public transportation use frequency among participants?
+
+## Answer, Response, + Summary of Results
+
+Among 252 participants with complete responses to Q26, public transportation use frequency varied across 
+participants, with responses distributed relatively evenly across the five categories. As shown in @fig-q26, 
+no single response category dominated the distribution.
+
+The largest group reported using public transportation **8 or more days a month** (n = 56, 22.2%), followed by 
+**2–4 days a month** (n = 54, 21.4%). The smallest group reported using public transportation **0–1 days a month** 
+(n = 40, 15.9%), while 51 participants (20.2%) reported **never using** public transportation.
+
+Overall, the distribution suggests that Q26 captures variation in transportation use and provides a useful basis 
+for examining factors associated with transportation behavior in future analyses.
+
+```{python}
+#| label: fig-q26
+#| fig-cap: "Distribution of Public Transportation Use Among Participants"
+#| echo: false
+#| fig-pos: "H"
+#| fig-width: 6
+#| fig-height: 3
+
+# Define the correct ordinal order
+q26_order = [
+    "Never",
+    "0-1 days a month",
+    "2-4 days a month",
+    "4-8 days a month",
+    "8 or more days a month"
+]
+
+# Frequency counts
+q26_counts = (
+    df["Q26"]
+    .value_counts()
+    .reindex(q26_order)
+)
+
+# Percentages
+q26_percent = q26_counts / q26_counts.sum() * 100
+
+# Create dataframe
+plot_df = pd.DataFrame({
+    "Usage Frequency": q26_order,
+    "Count": q26_counts.values,
+    "Percentage": q26_percent.values
+})
+
+# Plot
+sns.set_theme(style="white")
+
+plt.figure(figsize=(6.5, 2.8))
+
+ax = sns.barplot(
+    data=plot_df,
+    y="Usage Frequency",
+    x="Percentage",
+    color="#4C72B0",
+    width=0.6
+)
+
+# Add labels
+label_x = max(plot_df["Percentage"]) + 1
+
+for i, row in plot_df.iterrows():
+    ax.text(
+        label_x,
+        i,
+        f'{row["Percentage"]:.1f}% (n={row["Count"]})',
+        va="center",
+        ha="left",
+        fontsize=8
+    )
+
+# Formatting
+plt.xlabel("Participants (%)", fontsize=9)
+plt.ylabel("")
+
+plt.yticks(fontsize=9)
+plt.xticks(fontsize=9)
+
+plt.xlim(0, 30)
+
+sns.despine()
+
+plt.tight_layout()
+
+plt.show()
+```
+
+## What questions or uncertainties remain?
+
+- How should public transportation use frequency categories be appropriately coded for future statistical analysis?
+- What factors may explain differences in public transportation use frequency among participants?
