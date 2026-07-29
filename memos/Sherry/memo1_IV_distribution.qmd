@@ -7,12 +7,10 @@ engine: knitr
 format: html
 
 execute:
-  echo: false
+  echo: true
   warning: false
   message: false
 ---
-
-# Research Memo 1
 
 **To:** Project Collaborators
 
@@ -86,14 +84,12 @@ Table @tbl-ca-summary presents the descriptive statistics for the communication 
 ```{python}
 #| label: tbl-ca-summary
 #| tbl-cap: "Descriptive statistics for communication apprehension scores."
-
 summary = (
     df["communication_apprehension_score"]
     .describe()
     .round(2)
     .to_frame(name="Value")
 )
-
 summary
 ```
 
@@ -104,15 +100,12 @@ Figure @fig-ca-histogram displays the distribution of communication apprehension
 ```{python}
 #| label: fig-ca-histogram
 #| fig-cap: "Distribution of communication apprehension scores."
-
-plt.figure(figsize=(7,4.5))
-
+plt.figure(figsize=(6,4))
 plt.hist(
     df["communication_apprehension_score"].dropna(),
     bins=10,
     edgecolor="black"
 )
-
 plt.axvline(
     df["communication_apprehension_score"].mean(),
     color="red",
@@ -120,11 +113,16 @@ plt.axvline(
     linewidth=2,
     label="Mean"
 )
-
+plt.axvline(
+    df["communication_apprehension_score"].median(),
+    color="blue",
+    linestyle=":",
+    linewidth=2,
+    label="Median"
+)
 plt.xlabel("Communication Apprehension Score")
 plt.ylabel("Frequency")
 plt.legend()
-
 plt.tight_layout()
 plt.show()
 ```
