@@ -1,0 +1,136 @@
+---
+title: "Research Memo 1: Distribution of Communication Apprehension"
+author: "Sherry Tao"
+
+engine: knitr
+
+format: html
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Research Memo 1
+
+**To:** Project Collaborators
+
+**From:** Sherry Tao
+
+**Date:** July 28, 2026
+
+**Re:** What is the overall distribution of communication apprehension among participants?
+
+## Opening
+
+This memo examines the overall distribution of communication apprehension among participants. Communication apprehension was measured using twelve survey items (Q1–Q6 and Q13–Q18). Reverse-coded items were recoded before calculating a composite communication apprehension score for each participant. Descriptive statistics and a histogram were used to summarize the distribution of the resulting scores.
+```{r}
+#| include: false
+library(reticulate)
+use_virtualenv("memo_python", required = TRUE)
+```
+
+```{python}
+#| include: false
+# Data Preparation
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Load data
+df = pd.read_csv("../../cleaned_data/merged_data.csv")
+
+# Remove metadata rows if necessary
+df = df.iloc[2:].reset_index(drop=True)
+
+# Define Likert scale mapping
+likert_mapping = {
+    "Strongly disagree": 1,
+    "Somewhat disagree": 2,
+    "Neither agree nor disagree": 3,
+    "Somewhat agree": 4,
+    "Strongly agree": 5
+}
+
+# Communication apprehension items
+communication_apprehension_items = [
+    'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6',
+    'Q13', 'Q14', 'Q15', 'Q16', 'Q17', 'Q18'
+]
+
+# Reverse-coded items
+reverse_code_items = ['Q2', 'Q4', 'Q6', 'Q14', 'Q16', 'Q17']
+
+# Recode Likert responses
+for item in communication_apprehension_items:
+    if item in df.columns:
+        df[item] = df[item].map(likert_mapping)
+
+# Reverse-code selected items
+for item in reverse_code_items:
+    if item in df.columns:
+        df[item] = 6 - df[item]
+
+# Composite score (average across 12 items)
+df["communication_apprehension_score"] = (
+    df[communication_apprehension_items]
+    .mean(axis=1)
+)
+```
+
+## Descriptive Statistics
+
+Table @tbl-ca-summary presents the descriptive statistics for the communication apprehension scores.
+
+```{python}
+#| label: tbl-ca-summary
+#| tbl-cap: "Descriptive statistics for communication apprehension scores."
+
+summary = (
+    df["communication_apprehension_score"]
+    .describe()
+    .round(2)
+    .to_frame(name="Value")
+)
+
+summary
+```
+
+## Distribution of Communication Apprehension
+
+Figure @fig-ca-histogram displays the distribution of communication apprehension scores across participants.
+
+```{python}
+#| label: fig-ca-histogram
+#| fig-cap: "Distribution of communication apprehension scores."
+
+plt.figure(figsize=(7,4.5))
+
+plt.hist(
+    df["communication_apprehension_score"].dropna(),
+    bins=10,
+    edgecolor="black"
+)
+
+plt.axvline(
+    df["communication_apprehension_score"].mean(),
+    color="red",
+    linestyle="--",
+    linewidth=2,
+    label="Mean"
+)
+
+plt.xlabel("Communication Apprehension Score")
+plt.ylabel("Frequency")
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+## The Answer
+
+As shown in @tbl-ca-summary, the communication apprehension scores were calculated for **250 participants**. Scores ranged from **1.00** to **5.00**, with a mean of **2.41** (SD = **0.95**). The median score was **2.09**, and the middle 50% of observations fell between **1.75** and **3.00**.
+
+Figure @fig-ca-histogram shows that communication apprehension scores are concentrated toward the lower end of the scale, with relatively fewer participants reporting high levels of communication apprehension. Overall, the distribution suggests that most participants experienced **low to moderate communication apprehension**, although there is substantial variability across individuals.
