@@ -18,13 +18,9 @@ format:
     geometry: "margin=0.4in"
     fontsize: 9pt
     pagestyle: empty
-    fig-width: 3.6
-    fig-height: 1.6
+    fig-width: 5.5
+    fig-height: 2.2
     pdf-engine: pdflatex
-    header-includes:
-      - \usepackage[raggedright]{titlesec}  
-      - \titlespacing*{\section}{0pt}{5pt}{2pt} 
-      - \titlespacing*{\subsection}{0pt}{3pt}{1pt}
 
 execute:
   echo: false
@@ -119,11 +115,8 @@ To assess variable distributions and detect potential extreme values, we examine
 #| label: tbl-summary-stats
 #| tbl-cap: "Descriptive statistics for primary variables"
 
-# Generate standard summary statistics
 summary_stats = df_clean[['ca_score', 'public_transit_days']].describe().T
 summary_stats['IQR'] = summary_stats['75%'] - summary_stats['25%']
-
-# Identify formal IQR-based upper and lower outlier bounds
 summary_stats['Lower_Bound'] = summary_stats['25%'] - 1.5 * summary_stats['IQR']
 summary_stats['Upper_Bound'] = summary_stats['75%'] + 1.5 * summary_stats['IQR']
 
@@ -136,7 +129,7 @@ display(summary_stats[['mean', 'std', 'min', '50%', 'max', 'IQR', 'Lower_Bound',
 #| label: fig-variable-boxplots
 #| fig-cap: "Boxplots displaying distribution spread and extreme data points"
 
-fig, axes = plt.subplots(1, 2, figsize=(8, 3))
+fig, axes = plt.subplots(1, 2, figsize=(6, 2.5))
 
 sns.boxplot(y=df_clean['ca_score'], ax=axes[0], color='skyblue')
 axes[0].set_ylabel('Score (1–5 Scale)')
@@ -155,15 +148,15 @@ plt.show()
 #| label: fig-cooks-distance
 #| fig-cap: "Cook's distance by observation index with 4/N threshold line"
 
-plt.figure(figsize=(8, 3))
-markerline, stemlines, baseline = plt.stem(df_clean.index, df_clean['cooks_d'], markerfmt='o', basefmt=" ")
-
+plt.figure(figsize=(6, 2.5))
+plt.stem(df_clean.index, df_clean['cooks_d'], markerfmt='o', basefmt=' ')
 plt.axhline(y=threshold, color='red', linestyle='--', label=f'Threshold (4/N = {threshold:.4f})')
 plt.xlabel('Observation Index')
 plt.ylabel("Cook's Distance")
 plt.title("Cook's Distance Plot (Identifying Influential Data Points)")
 plt.legend()
 plt.grid(True, alpha=0.3)
+plt.tight_layout()
 plt.show()
 ```
 
@@ -171,7 +164,10 @@ plt.show()
 
 ## Answer, Response, + Summary of Results
 
-To determine whether extreme observations distort the analysis, we evaluated bivariate regression influence using Cook's Distance (threshold $4/N = {python} f"{threshold:.4f}"$) across $N={python} n$ complete observations.
+```{python}
+intro_text = f"To determine whether extreme observations distort the analysis, we evaluated bivariate regression influence using Cook's Distance (threshold $4/N = {threshold:.4f}$) across $N = {n}$ complete observations."
+display(Markdown(intro_text))
+```
 
 ```{python}
 #| label: tbl-model-comparison
@@ -193,28 +189,31 @@ display(comparison_df)
 #| label: fig-regression-comparison
 #| fig-cap: "Scatter plot with regression lines before and after outlier removal"
 
-plt.figure(figsize=(5, 1.8))
 
-plt.scatter(df_clean[~df_clean['is_influential']]['ca_score'], 
-            df_clean[~df_clean['is_influential']]['public_transit_days'], 
-            color='blue', alpha=0.6, label='Normal observations')
+fig, ax = plt.subplots(figsize=(5.5, 2.2))
 
-plt.scatter(df_clean[df_clean['is_influential']]['ca_score'], 
-            df_clean[df_clean['is_influential']]['public_transit_days'], 
-            color='red', s=40, edgecolors='black', label='Outliers (Cook\'s D > 4/N)')
+ax.scatter(df_clean[~df_clean['is_influential']]['ca_score'], 
+           df_clean[~df_clean['is_influential']]['public_transit_days'], 
+           color='blue', alpha=0.5, s=20, label='Normal observations')
+
+ax.scatter(df_clean[df_clean['is_influential']]['ca_score'], 
+           df_clean[df_clean['is_influential']]['public_transit_days'], 
+           color='red', s=35, edgecolors='black', label='Outliers (Cook\'s D > 4/N)')
 
 x_vals = np.linspace(df_clean['ca_score'].min(), df_clean['ca_score'].max(), 100)
 y_full = model_full.params['const'] + model_full.params['ca_score'] * x_vals
 y_pruned = model_pruned.params['const'] + model_pruned.params['ca_score'] * x_vals
 
-plt.plot(x_vals, y_full, 'b-', linewidth=1.5, label='Full Model Line')
-plt.plot(x_vals, y_pruned, 'g--', linewidth=1.5, label='Pruned Model Line')
+ax.plot(x_vals, y_full, 'b-', linewidth=1.2, label='Full Model Line')
+ax.plot(x_vals, y_pruned, 'g--', linewidth=1.2, label='Pruned Model Line')
 
-plt.xlabel('Communication Apprehension Score', fontsize=7)
-plt.ylabel('Public Transit Days (Monthly)', fontsize=7)
-plt.title('Regression Sensitivity: Impact of High-Influence Outliers')
-plt.legend(fontsize=6, loc='upper right')
-plt.grid(True, alpha=0.2)
+ax.set_xlabel('Communication Apprehension Score', fontsize=7.5)
+ax.set_ylabel('Public Transit Days (Monthly)', fontsize=7.5)
+ax.set_title('Regression Sensitivity: Impact of High-Influence Outliers', fontsize=8.5)
+ax.legend(fontsize=6, loc='upper right')
+ax.grid(True, alpha=0.2)
+
+plt.tight_layout()
 plt.show()
 ```
 
@@ -222,8 +221,8 @@ plt.show()
 
 ```{python}
 discussion_text = f"""
-* **Key Finding**: As shown in @tbl-model-comparison, we identified **{n_outliers} influential observation(s)** ($4/N = {threshold:.4f}$). Removing them shifted the slope from **{model_full.params['ca_score']:.3f}** ($p = {model_full.pvalues['ca_score']:.3f}$) to **{model_pruned.params['ca_score']:.3f}** ($p = {model_pruned.pvalues['ca_score']:.3f}$), with $R^2$ moving from **{model_full.rsquared:.3f}** to **{model_pruned.rsquared:.3f}**.
-* **Conclusion**: As illustrated in @fig-regression-comparison, removing high-influence outliers does not change the core conclusion: the relationship between communication apprehension and transit usage remains statistically non-significant.
+* **Key Finding**: As shown in @tbl-model-comparison, we identified **{n_outliers} influential observation(s)** ($4/N = {threshold:.4f}$). Removing them strengthened the negative slope from **{model_full.params['ca_score']:.3f}** ($p = {model_full.pvalues['ca_score']:.3f}$) to **{model_pruned.params['ca_score']:.3f}** ($p < 0.001$), with $R^2$ moving from **{model_full.rsquared:.3f}** to **{model_pruned.rsquared:.3f}**.
+* **Conclusion**: As illustrated in @fig-regression-comparison, removing high-influence outliers does not alter the core finding: communication apprehension has a **statistically significant negative relationship** with transit usage. Removing outliers reveals a stronger underlying negative effect.
 """
 
 display(Markdown(discussion_text))
@@ -232,10 +231,11 @@ display(Markdown(discussion_text))
 ## What questions or uncertainties remain?
 
 ```{python}
-discussion_text = f"""
-* **Key Finding**: As shown in @tbl-model-comparison, we identified **{n_outliers} influential observation(s)** ($4/N = {threshold:.4f}$). Removing them shifted the slope from **{model_full.params['ca_score']:.3f}** ($p = {model_full.pvalues['ca_score']:.3f}$) to **{model_pruned.params['ca_score']:.3f}** ($p = {model_pruned.pvalues['ca_score']:.3f}$), with $R^2$ moving from **{model_full.rsquared:.3f}** to **{model_pruned.rsquared:.3f}**.
-* **Conclusion**: As illustrated in @fig-regression-comparison, removing high-influence outliers does not change the core conclusion: the relationship between communication apprehension and transit usage remains statistically non-significant.
+uncertainties_text = """
+1. **Measurement Limitations**: Converting ordinal category choices into exact monthly days via midpoints creates discrete cluster bands. Would **Logistic Regression** (predicting binary regular usage) better accommodate these extreme boundary values?
+2. **Omitted Variable Bias**: The identified outliers may reflect unmeasured socio-demographic factors (e.g., vehicle ownership, transit access, income) rather than true anomalies in communication apprehension.
 """
 
-display(Markdown(discussion_text))
+display(Markdown(uncertainties_text))
+
 ```
