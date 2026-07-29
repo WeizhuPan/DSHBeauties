@@ -1,0 +1,163 @@
+---
+title: "Memo_3_index.qmd"
+author: "Chloe Oh"
+bibliography: references.bib
+code-fold: false
+format: 
+  html:
+    theme: cosmo 
+    
+  pdf: 
+    theme: article 
+execute: 
+  echo: false 
+  warning: false 
+  message: false 
+
+jupyter: python3
+---
+
+**Research or Analytical Question:**\
+How do communication apprehension scores differ between public transit users and non-users?
+
+## Answer, Response, + Summary of Results
+
+This memorandum uses `merged_data.csv` to compare communication apprehension scores between public transit users and non-users.
+
+Communication apprehension was measured using 12 Likert-scale items: `Q1`–`Q6` and `Q13`–`Q18`. Responses were coded from 1 for **Strongly disagree** to 5 for **Strongly agree**. Positively worded items (`Q2`, `Q4`, `Q6`, `Q14`, `Q16`, and `Q17`) were reverse-coded so that higher total scores consistently represented greater communication apprehension.
+
+Participants who selected **Never** for `Q26` were coded as non-users. Participants selecting any other public-transit-use category were coded as users.
+
+```{python}
+#| label: setup
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# Load the data
+prolific = pd.read_csv('Summer2026DSHBData/PRCAProlificExport_FileA.csv')
+qualtrics = pd.read_csv('Summer2026DSHBData/PRCAQualtricsExport_FileC.csv')
+
+# Merge on participant ID
+df = qualtrics.merge(prolific, left_on='Q0', right_on='Participant id', how='left')
+```
+
+```{python}
+#| label: create-variables
+
+# Define the Likert scale mapping
+likert_mapping = {
+    "Strongly disagree": 1,
+    "Somewhat disagree": 2,
+    "Neither agree nor disagree": 3,
+    "Somewhat agree": 4,
+    "Strongly agree": 5
+}
+
+# Communication apprehension items to recode
+communication_apprehension_items = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q13', 'Q14', 'Q15', 'Q16', 'Q17', 'Q18']
+
+reverse_code_items = ['Q2', 'Q4', 'Q6', 'Q14', 'Q16', 'Q17']
+
+ca_responses = df[communication_apprehension_items].replace(likert_mapping).astype(float)
+
+# Reverse-code positively worded items.
+ca_responses[reverse_code_items] = 6 - ca_responses[reverse_code_items]
+
+# Require complete responses on all 12 communication-apprehension items.
+df["communication_apprehension"] = ca_responses.sum(
+    axis=1,
+    min_count=len(communication_apprehension_items)
+)
+
+# Never = non-user; every other Q26 response = public transit user.
+df["transit_group"] = df["Q26"].apply(
+    lambda value: "Non-user" if value == "Never" else "User"
+)
+
+analysis_data = df.dropna(
+    subset=["communication_apprehension", "Q26"]
+).copy()
+```
+
+```{python}
+#| label: descriptive-statistics
+
+summary = (
+    analysis_data
+    .groupby("transit_group")["communication_apprehension"]
+    .agg(["count", "mean", "std", "median"])
+    .round(2)
+)
+
+summary
+```
+
+Public transit users had a mean communication apprehension score of **27.68** (`n = 191`), whereas non-users had a mean score of **33.72** (`n = 50`). Non-users therefore scored approximately **6.04 points higher**, on average, than transit users.
+
+```{python}
+#| label: visualization
+#| fig-cap: "Communication apprehension scores among public transit users and non-users."
+
+plot_order = ["Non-user", "User"]
+
+analysis_data.boxplot(
+    column="communication_apprehension",
+    by="transit_group",
+    grid=False
+)
+
+plt.title("Communication Apprehension by Public Transit Use")
+plt.suptitle("")
+plt.xlabel("Public Transit Group")
+plt.ylabel("Communication Apprehension Score")
+plt.show()
+```
+
+A visual comparison of the two groups indicates that communication apprehension scores tend to be higher among public transit non-users than among users.
+
+```{python}
+#| label: welch-test
+
+users = analysis_data.loc[
+    analysis_data["transit_group"] == "User",
+    "communication_apprehension"
+]
+
+non_users = analysis_data.loc[
+    analysis_data["transit_group"] == "Non-user",
+    "communication_apprehension"
+]
+
+welch_test = stats.ttest_ind(users, non_users, equal_var=False)
+
+# Welch–Satterthwaite degrees of freedom
+user_variance = users.var(ddof=1)
+non_user_variance = non_users.var(ddof=1)
+
+welch_df = (
+    (user_variance / len(users) + non_user_variance / len(non_users)) ** 2
+    /
+    (
+        (user_variance / len(users)) ** 2 / (len(users) - 1)
+        + (non_user_variance / len(non_users)) ** 2 / (len(non_users) - 1)
+    )
+)
+
+print(f"t = {welch_test.statistic:.3f}")
+print(f"df = {welch_df:.2f}")
+print(f"p = {welch_test.pvalue:.4f}")
+```
+
+A Welch independent-samples t-test found a statistically significant difference between the groups, *t*(65.79) = −2.97, *p* = .004. Based on these data, public transit users reported lower communication apprehension scores than non-users.
+
+This analysis identifies a difference between the two groups, but it does not establish that communication apprehension causes people to use or avoid public transportation.
+
+## What questions or uncertainties remain?
+
+Do demographic characteristics, access to a private vehicle, or the availability of public transportation help explain the difference between users and non-users?
+
+Would the result remain similar after controlling for age, employment status, student status, or country of residence?
+
+Does the frequency of public transit use differ across levels of communication apprehension among participants who already use public transportation?
