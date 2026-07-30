@@ -58,7 +58,7 @@ for examining factors associated with transportation behavior in future analyses
 ```{python}
 #| label: fig-q26
 #| fig-cap: "Distribution of Public Transportation Use Among Participants"
-#| echo: false
+#| echo: true
 #| fig-pos: "H"
 #| fig-width: 6
 #| fig-height: 3
