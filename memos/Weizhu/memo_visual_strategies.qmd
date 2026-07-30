@@ -48,7 +48,7 @@ for item in reverse_code_items:
 
 # Compute composite communication apprehension score
 communication_apprehension_columns = [col for col in communication_apprehension_items if col in df.columns]
-df['communication_apprehension_score'] = df[communication_apprehension_columns].mean(axis=1)
+df['communication_apprehension_score'] = df[communication_apprehension_columns].sum(axis=1)
 
 # Recode public transit usage frequency (Q26) - midpoint estimation
 transit_midpoint_mapping = {
@@ -72,17 +72,27 @@ df_clean = df.dropna(subset=['communication_apprehension_score', 'public_transit
 print(f"Sample size after cleaning: {len(df_clean)}")
 ```
 
-# Visualization Strategy 1: Raw Scatter Plot
+# Visualization Strategy 1: Box Plot
 
 ```{python}
-#| label: fig-raw-scatter
-#| fig-cap: "Raw scatter plot of communication apprehension score vs. public transit days"
-plt.figure(figsize=(8, 6))
-plt.scatter(df_clean['communication_apprehension_score'], df_clean['public_transit_days'], alpha=0.6)
+#| label: fig-raw-boxplot
+#| fig-cap: "Box plot of communication apprehension score by transit usage categories"
+
+# Get original transit categories in order
+transit_order = ["Never", "0-1 days a month", "2-4 days a month", "4-8 days a month", "8 or more days a month"]
+
+# Filter to only include valid transit categories
+df_plot = df_clean[df_clean['Q26'].isin(transit_order)].copy()
+df_plot['Q26'] = pd.Categorical(df_plot['Q26'], categories=transit_order, ordered=True)
+
+# Create box plot
+plt.figure(figsize=(6.5, 4))
+sns.boxplot(x='communication_apprehension_score', y='Q26', data=df_plot, 
+            order=transit_order, palette=['lightgray', 'lightblue', 'steelblue', 'darkblue', 'navy'])
 plt.xlabel('Communication Apprehension Score')
-plt.ylabel('Public Transit Days per Month (Midpoint)')
-plt.title('Raw Scatter Plot: Communication Apprehension vs. Public Transit Usage')
-plt.grid(alpha=0.3)
+plt.ylabel('Public Transit Usage Frequency')
+plt.title('Communication Apprehension Score by Transit Usage Category')
+plt.grid(axis='x', alpha=0.3)
 plt.tight_layout()
 plt.show()
 ```
@@ -109,7 +119,7 @@ jitter_y = df_clean['public_transit_days'] + np.random.normal(0, 0.3, len(df_cle
 jitter_x = df_clean['communication_apprehension_score'] + np.random.normal(0, 0.05, len(df_clean))
 
 # Create plot
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(6.5, 4.5))
 plt.scatter(jitter_x, jitter_y, alpha=0.5, s=30, color='steelblue', label='Observed Data')
 
 # Plot regression line with confidence interval
@@ -122,7 +132,7 @@ plt.plot(x_pred, y_pred, 'r-', linewidth=2, label='OLS Regression Line')
 plt.fill_between(x_pred, y_pred_ci[:, 0], y_pred_ci[:, 1], alpha=0.2, color='red', label='95% CI')
 
 plt.xlabel('Communication Apprehension Score')
-plt.ylabel('Public Transit Days per Month (Midpoint)')
+plt.ylabel('Public Transit Days in Last 3 Months (Midpoint)')
 plt.title('OLS Regression with Jittered Points and Confidence Interval')
 plt.legend()
 plt.grid(alpha=0.3)
@@ -145,7 +155,8 @@ y_logit = df_clean['is_transit_user']
 model_logit = sm.Logit(y_logit, X_logit).fit()
 
 # Generate predicted probabilities across full range
-x_range = np.linspace(1, 5, 100)
+x_range = np.linspace(df_clean['communication_apprehension_score'].min(), 
+                      df_clean['communication_apprehension_score'].max(), 100)
 x_range_const = sm.add_constant(x_range)
 predicted_probs = model_logit.predict(x_range_const)
 
@@ -155,7 +166,7 @@ jitter_y = df_clean['is_transit_user'] + np.random.normal(0, 0.03, len(df_clean)
 jitter_x = df_clean['communication_apprehension_score'] + np.random.normal(0, 0.02, len(df_clean))
 
 # Create plot with minimal styling
-plt.figure(figsize=(7, 4))
+plt.figure(figsize=(6, 3.5))
 plt.scatter(jitter_x, jitter_y, color='black', alpha=0.3, s=20, label='Observed Data')
 plt.plot(x_range, predicted_probs, 'b-', linewidth=2, label='Fitted Probability')
 
@@ -165,7 +176,8 @@ plt.ylabel('Probability of Being a Transit User')
 plt.title('Logistic Regression: Predicted Probability of Transit User Status')
 plt.ylim(-0.1, 1.1)
 plt.yticks([0.00, 0.25, 0.50, 0.75, 1.00])
-plt.xlim(1, 5)
+plt.xlim(df_clean['communication_apprehension_score'].min(), 
+           df_clean['communication_apprehension_score'].max())
 
 # Remove top and right spines
 ax = plt.gca()
@@ -201,7 +213,7 @@ crosstab = pd.crosstab(df_clean['ca_quartile'], df_clean['Q26'], normalize='inde
 crosstab = crosstab[transit_order]  # Ensure correct order
 
 # Create stacked bar chart
-fig, ax = plt.subplots(figsize=(10, 5))
+fig, ax = plt.subplots(figsize=(7.5, 4))
 crosstab.plot(kind='bar', stacked=True, ax=ax, 
               color=['lightgray', 'lightblue', 'steelblue', 'darkblue', 'navy'],
               edgecolor='black', linewidth=0.5)
@@ -217,3 +229,14 @@ plt.tight_layout()
 plt.show()
 ```
 
+
+# Conclusion
+
+The four visualization strategies evaluated in this memo each serve different analytical purposes and are suited to different forms of the dependent variable:
+
+- Box plots ([Figure 1](#fig-raw-boxplot)) show distribution of communication apprehension scores by transit category but require sufficient sample size per category
+- Jittered OLS regression ([Figure 2](#fig-jitter-ols)) provides clear linear relationship information with confidence intervals but assumes unbounded continuous outcomes
+- Logistic regression sigmoid curves ([Figure 3](#fig-logit-sigmoid)) are theoretically appropriate for binary outcomes but discard frequency information
+- Proportional stacked bar charts ([Figure 4](#fig-stacked-bars)) preserve ordinal information and show distributional patterns but require discretization of continuous predictors
+
+The choice of visualization should be guided by the specific research question, the nature of the forms of dependent variable, and the intended audience. For comprehensive analysis, researchers should consider presenting multiple complementary visualizations to fully capture the complexity of the relationship between communication apprehension and public transportation usage.
