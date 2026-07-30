@@ -1,13 +1,16 @@
 ---
-title: "Visualizing Relationships between Communication Apprehension and Public Transit Usage"
-author: "Weizhu Pan"
+title: "Memo4: Visualizing Relationships between Communication Apprehension and Public Transit Usage"
 bibliography: ../../references.bib
 code-fold: false
 ---
 
+*To: DSHBeauties group members*\
+*From: Weizhu Pan*\
+*Re: Which visual strategy best represents the potential relationship between the variable x and y ?*
+
 # Introduction
 
-This memo evaluates different visual strategies for illustrating the potential relationship between communication apprehension and public transportation usage. Given the complex nature of the dependent variable—which can be operationalized as continuous midpoint estimates, ordinal categories, or binary user status—we compare four distinct visualization approaches to assess their strengths and limitations for different data types and analytical contexts.
+This memo evaluates different visual strategies for illustrating the potential relationship between communication apprehension and public transportation usage. Given the complex nature of the dependent variable, which can be operationalized as continuous midpoint estimates, ordinal categories, or binary user status, we compare four distinct visualization approaches to assess their strengths and limitations for different data types and analytical contexts.
 
 # Data Preparation
 
@@ -96,7 +99,6 @@ plt.grid(axis='x', alpha=0.3)
 plt.tight_layout()
 plt.show()
 ```
-
 
 # Visualization Strategy 2: Jittered OLS Regression
 
@@ -194,7 +196,6 @@ plt.tight_layout()
 plt.show()
 ```
 
-
 # Visualization Strategy 4: Proportional Stacked Bar Chart
 
 ```{python}
@@ -229,14 +230,13 @@ plt.tight_layout()
 plt.show()
 ```
 
-
-# Conclusion
+# Answer & Conclusion
 
 The four visualization strategies evaluated in this memo each serve different analytical purposes and are suited to different forms of the dependent variable:
 
-- Box plots ([Figure 1](#fig-raw-boxplot)) show distribution of communication apprehension scores by transit category but require sufficient sample size per category
-- Jittered OLS regression ([Figure 2](#fig-jitter-ols)) provides clear linear relationship information with confidence intervals but assumes unbounded continuous outcomes
-- Logistic regression sigmoid curves ([Figure 3](#fig-logit-sigmoid)) are theoretically appropriate for binary outcomes but discard frequency information
-- Proportional stacked bar charts ([Figure 4](#fig-stacked-bars)) preserve ordinal information and show distributional patterns but require discretization of continuous predictors
+-   Box plots ([Figure 1](#fig-raw-boxplot)) show distribution of communication apprehension scores by transit category but require sufficient sample size per category
+-   Jittered OLS regression ([Figure 2](#fig-jitter-ols)) provides clear linear relationship information with confidence intervals but assumes unbounded continuous outcomes
+-   Logistic regression sigmoid curves ([Figure 3](#fig-logit-sigmoid)) are theoretically appropriate for binary outcomes but discard frequency information
+-   Proportional stacked bar charts ([Figure 4](#fig-stacked-bars)) preserve ordinal information and show distributional patterns but require discretization of continuous predictors
 
 The choice of visualization should be guided by the specific research question, the nature of the forms of dependent variable, and the intended audience. For comprehensive analysis, researchers should consider presenting multiple complementary visualizations to fully capture the complexity of the relationship between communication apprehension and public transportation usage.
